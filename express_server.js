@@ -13,6 +13,14 @@ const urlDatabase = {
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  // uses the shortURL key to enter database
+ delete urlDatabase[req.params.shortURL];
+ res.render('urls_show'); //cannot get this to refresh page and have deleted url
+});
+
+
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
