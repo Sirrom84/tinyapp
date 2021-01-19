@@ -16,10 +16,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  
   res.redirect("/urls/" + shortURL);
+  //creates a rand string to act as key that gets stored in Database
   
-   //res.redirect back to urls       // Respond with 'Ok' (we will replace this)
 });
 
 app.get('/urls', (req,res) => {
