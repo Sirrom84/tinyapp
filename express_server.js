@@ -16,12 +16,11 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
-  console.log(req.params);
  delete urlDatabase[req.params.shortURL];
  const templateVars = {
   urls: urlDatabase
 };
-res.render("urls_index", templateVars)
+res.render("urls_index", templateVars) // refreshes the page with the deleted url gone.
 });
 
 
