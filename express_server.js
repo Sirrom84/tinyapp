@@ -16,8 +16,12 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
+  console.log(req.params);
  delete urlDatabase[req.params.shortURL];
- res.render('urls_show'); //cannot get this to refresh page and have deleted url
+ const templateVars = {
+  urls: urlDatabase
+};
+res.render("urls_index", templateVars)
 });
 
 
@@ -45,7 +49,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-app.get("/urls/:shortURL", (req,res) => { //do not understand this part at all
+app.get("/urls/:shortURL", (req,res) => { //do not understand this part
   console.log(req.params);
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] 
