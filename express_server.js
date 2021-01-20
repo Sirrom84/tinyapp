@@ -1,7 +1,12 @@
 
 const express = require("express");
+const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 const app = express();
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 const PORT = 8080;
+
 
 app.set("view engine", "ejs");
 
@@ -10,15 +15,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
 
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
  delete urlDatabase[req.params.shortURL];
  const templateVars = {
-  urls: urlDatabase
+  urls: urlDatabase,
+  username: req.body["username"]
 };
 res.render("urls_index", templateVars) // refreshes the page with the deleted url gone.
 });
@@ -29,9 +33,12 @@ urlDatabase[req.params.shortURL] = req.body.longURL
 res.redirect("/urls") // refreshes the page with the deleted url gone.
 });
 
-app.post("/login/", (req,res) => {
-console.log(req.body.username);   ///takes the username from the form body when you log in
-  res.redirect('/urls/')
+app.post('/login', (req, res) => {
+
+  const { username } = req.body //destructed
+  res.cookie('username', username);
+  res.redirect("/urls");
+
 });
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
@@ -42,8 +49,11 @@ app.post("/urls", (req, res) => {
 });
 
 app.get('/urls', (req,res) => {
+  const userId = req.cookies.username
+  console.log(req.cookies,'this is our cookies log'); //template vars essentially is a package object you send to the template with all the usefull key value pairs (variables) you wan to access on the template side 
   const templateVars = {
-    urls: urlDatabase
+    urls: urlDatabase,
+    username: userId
   };
   res.render("urls_index", templateVars)
 })
@@ -59,7 +69,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls/:shortURL", (req,res) => { 
   const templateVars = {
-    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] 
+    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    username: req.body["username"]
   }
   res.render('urls_show', templateVars);
 });
@@ -85,3 +96,9 @@ function generateRandomString() {
   return Math.random().toString(36).slice(7);
 
 };
+
+
+
+
+
+
