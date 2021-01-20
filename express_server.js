@@ -16,6 +16,10 @@ const urlDatabase = {
 };
 
 
+app.post("/logout" , (req, res) => {
+res.clearCookie('username');
+res.redirect("/urls");
+});
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
