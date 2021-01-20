@@ -29,8 +29,10 @@ urlDatabase[req.params.shortURL] = req.body.longURL
 res.redirect("/urls") // refreshes the page with the deleted url gone.
 });
 
-
-
+app.post("/login/", (req,res) => {
+console.log(req.body.username);   ///takes the username from the form body when you log in
+  res.redirect('/urls/')
+});
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;

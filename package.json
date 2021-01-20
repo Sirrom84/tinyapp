@@ -24,6 +24,7 @@
     "express": "^4.17.1"
   },
   "devDependencies": {
+    "cookie-parser": "^1.4.5",
     "nodemon": "^2.0.7"
   }
 }
