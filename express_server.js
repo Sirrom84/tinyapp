@@ -16,10 +16,13 @@ const urlDatabase = {
 };
 
 
+
 app.post("/logout" , (req, res) => {
 res.clearCookie('username');
 res.redirect("/urls");
 });
+
+
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
@@ -53,6 +56,15 @@ app.post("/urls", (req, res) => {
   //creates a rand string to act as key that gets stored in Database
   });
 
+  app.get('/register', (req, res) => {
+    const userId = req.cookies.username
+    const templateVars = {
+      username: userId
+    }
+    res.render("register",templateVars)
+    });
+    
+
 app.get('/urls', (req,res) => {
   const userId = req.cookies.username
   console.log(userId, 'line 54 adding cookie value to template'); //userId will now be the value of the cookies object thanks to our parser. template vars essentially is a package object you send to the template with all the usefull key value pairs (variables) you wan to access on the template side 
@@ -64,7 +76,11 @@ app.get('/urls', (req,res) => {
 })
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const userId = req.cookies.username;
+  const templateVars = {
+    username: userId
+  };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
