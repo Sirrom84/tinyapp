@@ -5,10 +5,10 @@ const cookieParser = require('cookie-parser');
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+app.set("view engine", "ejs");
 const PORT = 8080;
 
 
-app.set("view engine", "ejs");
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -20,9 +20,10 @@ const urlDatabase = {
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
  delete urlDatabase[req.params.shortURL];
+ const userId = req.cookies.username;
  const templateVars = {
   urls: urlDatabase,
-  username: req.body["username"]
+  username: userId
 };
 res.render("urls_index", templateVars) // refreshes the page with the deleted url gone.
 });
@@ -36,6 +37,7 @@ res.redirect("/urls") // refreshes the page with the deleted url gone.
 app.post('/login', (req, res) => {
 
   const { username } = req.body //destructed
+console.log(username, 'creating the cookie');
   res.cookie('username', username);
   res.redirect("/urls");
 
@@ -45,12 +47,11 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect("/urls/" + shortURL);
   //creates a rand string to act as key that gets stored in Database
-  
-});
+  });
 
 app.get('/urls', (req,res) => {
   const userId = req.cookies.username
-  console.log(req.cookies,'this is our cookies log'); //template vars essentially is a package object you send to the template with all the usefull key value pairs (variables) you wan to access on the template side 
+  console.log(userId, 'line 54 adding cookie value to template'); //userId will now be the value of the cookies object thanks to our parser. template vars essentially is a package object you send to the template with all the usefull key value pairs (variables) you wan to access on the template side 
   const templateVars = {
     urls: urlDatabase,
     username: userId
@@ -68,9 +69,10 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req,res) => { 
+  const userId = req.cookies.username;
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
-    username: req.body["username"]
+    username: userId
   }
   res.render('urls_show', templateVars);
 });
