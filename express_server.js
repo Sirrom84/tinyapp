@@ -15,17 +15,26 @@ function generateRandomString() {
 };
 
 function findEmail (email) {
-  for(let user in users){
-    if(email === users[user].email) {
-      return true;
+  for(let userId in users){
+    if(email === users[userId].email) {
+      return users[userId];
     }
   }
+  return false;
 };
 
 const lookUpUser = (userId,users) => {
   return users[userId];
 };
   
+function checkPassword (email, password) {
+  for(let user in users){
+    if(email === users[user].email && password === users[user].password){
+      return true;
+    }
+  }
+  return false
+};
 
 
 const users = { 
@@ -50,7 +59,7 @@ const urlDatabase = {
 
 app.post("/logout" , (req, res) => {
 res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 
 });
 
@@ -63,16 +72,16 @@ app.post("/register" , (req, res) => { //registering a new user and storing the 
    } else if (findEmail(email)) {
     res.status(404).send("Email taken please enter a different email")
    }
-console.log('users is he in there users', users);
+
  users[id] = {
    id,
    email,
    password
  };
  res.cookie('user_id', id);
+ console.log('users is he in there users', users);
  res.redirect("/urls")
 });
-
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
@@ -92,12 +101,26 @@ urlDatabase[req.params.shortURL] = req.body.longURL
 res.redirect("/urls") // refreshes the page with the deleted url gone.
 });
 
+
+
 app.post('/login', (req, res) => {
-
-
-//  res.cookie('username');
-  res.redirect("/urls");
+  const user = findEmail(req.body.email);
+  const templateVars = {
+    urls: urlDatabase,
+    user: user
+  };
+if (checkPassword(req.body.email, req.body.password)) {
+console.log("login if statement logged in");
+res.cookie('user_id', user.id )
+  return res.render("urls_index", templateVars);
+} else {
+  console.log("else trigger for login should be register");
+  return res.redirect("/register");
+};
 });
+
+
+
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
@@ -107,7 +130,7 @@ app.post("/urls", (req, res) => {
   });
 
   app.get('/register', (req, res) => {
-    const userId = req.cookies.username;
+    const userId = req.cookies.user_id;
     const user = lookUpUser(userId,users)
     const templateVars = {
       user: user
@@ -161,6 +184,17 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
+
+app.get("/login", (req, res) => {
+  const userId = req.cookies.username;
+  const user = lookUpUser(userId,users)
+  const templateVars = {
+    user: user
+  }
+  res.render('login',templateVars)
+
+})
 
 app.use(function(req, res, next) {
   res.status(404).send("that page does not exist")
