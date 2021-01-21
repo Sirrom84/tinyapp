@@ -187,7 +187,7 @@ app.get("/hello", (req, res) => {
 
 
 app.get("/login", (req, res) => {
-  const userId = req.cookies.username;
+  const userId = req.cookies.user_id;
   const user = lookUpUser(userId,users)
   const templateVars = {
     user: user
