@@ -21,10 +21,10 @@
         </tr>
       </thead>
       <tbody>
-        <% for(let url in urls) { %> <!--template vars -->
+        <% for(let url in urls) { %> 
           <tr>
             <td><%= url %></td>
-            <td><%= urls[url] %></td>
+            <td><%= urls[url]["longURL"] %></td>
             <td>
               <a href="/urls/<%= url %>" class="btn btn-outline-primary"> Edit </a>
             </td>

@@ -51,8 +51,8 @@ const users = {
 }
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID"},
+  "9sm5xK": {longURL: "http://www.google.com", userID: "user2RandomID"}
 };
 
 
@@ -85,23 +85,20 @@ app.post("/register" , (req, res) => { //registering a new user and storing the 
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
- delete urlDatabase[req.params.shortURL];
- const userId = req.cookies.user_id;
- const user = lookUpUser(userId, users)
- const templateVars = {
-  urls: urlDatabase,
-  user: user
-};
-res.render("urls_index", templateVars) // refreshes the page with the deleted url gone.
+  delete urlDatabase[req.params.shortURL];
+  const userId = req.cookies.user_id;
+  const user = lookUpUser(userId, users)
+  const templateVars = {
+    urls: urlDatabase,
+    user: user
+  };
+  res.render("urls_index", templateVars) // refreshes the page with the deleted url gone.
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
-urlDatabase[req.params.shortURL] = req.body.longURL
-
-res.redirect("/urls") // refreshes the page with the deleted url gone.
+  urlDatabase[req.params.shortURL] = req.body.longURL
+  res.redirect("/urls") // refreshes the page with the deleted url gone.
 });
-
-
 
 app.post('/login', (req, res) => {
   const user = findEmail(req.body.email);
@@ -109,25 +106,19 @@ app.post('/login', (req, res) => {
     urls: urlDatabase,
     user: user
   };
-if (checkPassword(req.body.email, req.body.password)) {
-console.log("login if statement logged in");
-res.cookie('user_id', user.id )
-  return res.render("urls_index", templateVars);
-} else {
-  console.log("else trigger for login should be register");
-  return res.redirect("/register");
-};
+  if (checkPassword(req.body.email, req.body.password)) {
+    console.log("login if statement logged in");
+    res.cookie('user_id', user.id )
+    return res.render("urls_index", templateVars);
+  } else {
+    console.log("else trigger for login should be register");
+    return res.redirect("/register");
+  };
 });
 
 
 
 
-app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls/" + shortURL);
-  //creates a rand string to act as key that gets stored in Database
-  });
 
   app.get('/register', (req, res) => {
     const userId = req.cookies.user_id;
@@ -140,8 +131,8 @@ app.post("/urls", (req, res) => {
     
 
 app.get('/urls', (req,res) => {
-  const userId = req.cookies['user_id']
-  const user = lookUpUser(userId, users)
+  const userId = req.cookies['user_id'];
+  const user = lookUpUser(userId, users);
   const templateVars = {
     urls: urlDatabase,
     user: user
@@ -166,6 +157,17 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+app.post("/urls", (req, res) => {
+  let shortURL = generateRandomString();
+  let longURL = req.body.longURL;
+  let userID = req.cookies["user_id"]
+  console.log('printing the whole body' ,req.body);
+  urlDatabase[shortURL] = {longURL:longURL, userID: userID };
+  res.redirect("/urls/" + shortURL);
+  //creates a rand string to act as key that gets stored in Database
+  });
+
+
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL]
   res.redirect(longURL);
@@ -175,7 +177,8 @@ app.get("/urls/:shortURL", (req,res) => {
   const userId = req.cookies.user_id;
   const user = lookUpUser(userId, users);
   const templateVars = {
-    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: user
   }
   res.render('urls_show', templateVars);
