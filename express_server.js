@@ -146,7 +146,11 @@ app.get('/urls', (req,res) => {
     urls: urlDatabase,
     user: user
   };
-  res.render("urls_index", templateVars)
+  if (!user) {
+    return res.redirect("/login");
+  } else {
+    return res.render("urls_index", templateVars);
+  }
 })
 
 app.get("/urls/new", (req, res) => {
@@ -155,7 +159,11 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: user
   };
-  res.render("urls_new", templateVars);
+  if (!user) {
+    return res.redirect("/login"); //this might need vars
+  } else {
+    return res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/u/:shortURL", (req, res) => {

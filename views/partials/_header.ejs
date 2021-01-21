@@ -9,12 +9,13 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        
        
        
         
       </div></div>
    <% if(user){ %> <h4>Logged in as:<%= user.email %></h4>
-       <form class="" action="/logout" method="POST">
+        <form class="" action="/logout" method="POST">
         <button type="submit" class="btn btn-outline-dark ml-3">Logout</button>
         </form> 
      <% } else{ %>  
