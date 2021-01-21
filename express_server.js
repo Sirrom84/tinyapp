@@ -14,6 +14,20 @@ function generateRandomString() {
 
 };
 
+function findEmail (email) {
+  for(let user in users){
+    if(email === users[user].email) {
+      return true;
+    }
+  }
+};
+
+const lookUpUser = (userId,users) => {
+  return users[userId];
+};
+  
+
+
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
@@ -35,45 +49,39 @@ const urlDatabase = {
 
 
 app.post("/logout" , (req, res) => {
-res.clearCookie('username');
-res.redirect("/urls");
+res.clearCookie("user_id");
+  res.redirect("/urls");
+
 });
 
-app.post("/register" , (req, res) => {
+app.post("/register" , (req, res) => { //registering a new user and storing the info into the users database
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  if (email === '' || password === '') {
+    res.status(404).send("You need to log in")
+   } else if (findEmail(email)) {
+    res.status(404).send("Email taken please enter a different email")
+   }
+console.log('users is he in there users', users);
  users[id] = {
    id,
    email,
    password
  };
- 
- res.cookie('username', id);
- 
+ res.cookie('user_id', id);
  res.redirect("/urls")
-  //1: need to be able to add a new user object above to global user object with id: email: and password provided from the register form
-  // users[newUser + generateRandomString()] = {id:newUser, email: req.body.email, password: req.body.password};//***NOT UPDATING PROPERLY */
-  
-  //2: After adding the user, set a user_id cookie containing the user's newly generated ID.
-//****MAYBE I NEED TO TRY TEMPLATE VARS NEXT */
-  // const newId = req.body 
-  // console.log(username, 'creating the cookie when registering');
-  //   res.cookie('username', username);
-  //3: Redirect the user to the /urls page.
-  //4: Test that the users object is properly being appended to. You can insert a console.log or debugger prior to the redirect logic to inspect what data the object contains.
-  //5: Also test that the user_id cookie is being set correctly upon redirection. You already did this sort of testing in the Cookies in Express activity. Use the same approach here.
-  console.log(users);
 });
-// console.log(users, "this is my user test");
+
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
  delete urlDatabase[req.params.shortURL];
- const userId = req.cookies.username;
+ const userId = req.cookies.user_id;
+ const user = lookUpUser(userId, users)
  const templateVars = {
   urls: urlDatabase,
-  username: userId
+  user: user
 };
 res.render("urls_index", templateVars) // refreshes the page with the deleted url gone.
 });
@@ -85,12 +93,12 @@ res.redirect("/urls") // refreshes the page with the deleted url gone.
 });
 
 app.post('/login', (req, res) => {
-const { username } = req.body //destructed
-console.log(username, 'creating the cookie when login is clicked');
-  res.cookie('username', username);
-  res.redirect("/urls");
 
+
+//  res.cookie('username');
+  res.redirect("/urls");
 });
+
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
@@ -99,28 +107,30 @@ app.post("/urls", (req, res) => {
   });
 
   app.get('/register', (req, res) => {
-    const userId = req.cookies.username
+    const userId = req.cookies.username;
+    const user = lookUpUser(userId,users)
     const templateVars = {
-      username: userId
+      user: user
     }
     res.render("register",templateVars)
     });
     
 
 app.get('/urls', (req,res) => {
-  const userId = req.cookies.username
-  console.log(userId, 'line 54 adding cookie value to template'); //userId will now be the value of the cookies object thanks to our parser. template vars essentially is a package object you send to the template with all the usefull key value pairs (variables) you wan to access on the template side 
+  const userId = req.cookies['user_id']
+  const user = lookUpUser(userId, users)
   const templateVars = {
     urls: urlDatabase,
-    username: userId
+    user: user
   };
   res.render("urls_index", templateVars)
 })
 
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies.username;
+  const userId = req.cookies.user_id;
+  const user = lookUpUser(userId, users);
   const templateVars = {
-    username: userId
+    user: user
   };
   res.render("urls_new", templateVars);
 });
@@ -131,10 +141,11 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req,res) => { 
-  const userId = req.cookies.username;
+  const userId = req.cookies.user_id;
+  const user = lookUpUser(userId, users);
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
-    username: userId
+    user: user
   }
   res.render('urls_show', templateVars);
 });
@@ -151,11 +162,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.use(function(req, res, next) {
+  res.status(404).send("that page does not exist")
+});
+
 app.listen(PORT, () => {
   console.log(`Tiny app listening on port ${PORT}!`);
 });
-
-
 
 
 
