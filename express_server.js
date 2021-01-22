@@ -2,6 +2,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -30,7 +31,7 @@ function checkPassword (email, password) {
     if(email === users[user].email && password === users[user].password){
       return true;
     }
-  }
+  }  
   return false
 };
 
@@ -65,14 +66,14 @@ const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID"},
   "9sm5xK": {longURL: "http://www.google.com", userID: "user2RandomID"}
 };
-
-app.get('/register', (req, res) => {
-  const userId = req.cookies.user_id;
-  const user = lookUpUser(userId,users)
+//register as a new user//
+app.get('/register', (req, res) => { 
+  const userId = req.cookies.user_id; //sessionOptions.user_id
+  const user = lookUpUser(userId,users);
   const templateVars = {
-    user: user
+    user: user //pass the user object to HTML for use when removed causes bugs
   };
-  res.render("register",templateVars);
+  res.render("register", templateVars); //show the user the register page and pass those variables
 });
     
 app.get('/urls', (req,res) => {
@@ -139,39 +140,57 @@ app.get("/login", (req, res) => {
   res.render('login',templateVars);
 });
 
-app.post('/login', (req, res) => {
-  const user = findEmail(req.body.email);
-    if (checkPassword(req.body.email, req.body.password)) {
-      res.cookie('user_id', user.id );
-      return res.redirect("/urls");
-   }else {
-      return res.redirect("/register");
-  };
+app.post("/login", (req, res) => {
+  const user = findEmail(req.body.email, users);
+  if (!user) {
+    res.status(403).send('Email Not Found');
+    return;
+  }
+  const passwordGood = bcrypt.compareSync(req.body.password, user.password);
+  if (!passwordGood) {
+    res.status(403).send('Incorrect Password');
+    return;
+  }
+  req.session.user_ID = user.ID;
+  return res.redirect('/urls');
 });
 
+// app.post('/login', (req, res) => {
+//   const user = findEmail(req.body.email,);
+//   console.log(user);
+//     if (bcrypt.compareSync(req.body.password, user.password)) {
+//        // returns true
+//       res.cookie('user_id', user.id );
+//       return res.redirect("/urls");
+//    }else {
+//       return res.redirect("/register");
+//   };
+// });
+// (checkPassword(req.body.email, req.body.password))
 app.post("/logout" , (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
 });
 
 app.post("/register" , (req, res) => { //registering a new user and storing the info into the users database
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const id = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
     if (email === '' || password === '') {
       res.status(404).send("You need to log in")
     }else if (findEmail(email)) {
       res.status(404).send("Email taken please enter a different email")
-  };
+    };
     users[id] = {
-    id,
-    email,
-    password
-  };
+      id,
+      email,
+      password: hashedPassword
+    };
+    console.log("checking the users object", users);
   res.cookie('user_id', id);
   res.redirect("/urls")
 });
-
 app.post("/urls/:shortURL/delete", (req, res) => {
   // uses the shortURL key to enter database
   delete urlDatabase[req.params.shortURL];
