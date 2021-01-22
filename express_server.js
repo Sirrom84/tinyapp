@@ -6,54 +6,52 @@ const {findEmail}  = require('./helper');
 const bcrypt = require('bcrypt');
 const {generateRandomString} = require("./helper");
 const app = express();
+
 app.use(cookieSession({
   name: 'session',
   keys: ['secret keys', 'key']
 }));
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
-const PORT = 8080;
 
+const PORT = 8080;
 
 const lookUpUser = (userId,users) => {
   return users[userId];
 };
   
-
-
 const userUrl = (userId, urlDatabase) => {
   let userInfo = {};
   for (let urls in urlDatabase) {
-  //looking for user id in database that matches current user
     if (userId === urlDatabase[urls].userID) {
       userInfo[urls] = urlDatabase[urls];
     }
   }
   return userInfo;
 };
-
-
+//User Database//
 const users = { };
-  
 
-
-// urlDatabase[req.params.shortURL] = req.body.longURL
 const urlDatabase = {};
-//register as a new user//
+
+//////////////////
+//////////////////
+/////APP GETS/////
+//////////////////
+
+//Register new user//
 app.get('/register', (req, res) => {
   const userId = req.session.userId;
-  const user = lookUpUser(userId,users);                               //req.session.userId    //req.cookies.user_id;
+  const user = lookUpUser(userId,users);
   const templateVars = {
-    user: user //pass the user object to HTML for use when removed causes bugs
+    user: user
   };
-  res.render("register", templateVars); //show the user the register page and pass those variables
+  res.render("register", templateVars);
 });
     
 app.get('/urls', (req,res) => {
-  const userId =  req.session.userId;                                            //req.cookies['user_id'];
-  // const user = lookUpUser(userId, users);
-  
- 
+  const userId =  req.session.userId;
   const templateVars = {
     urls: userUrl(userId,urlDatabase),
     user: users[userId]
@@ -66,7 +64,7 @@ app.get('/urls', (req,res) => {
 });
 //Create new URL//
 app.get("/urls/new", (req, res) => {
-  const userId = req.session.userId;                                             //req.cookies.user_id;
+  const userId = req.session.userId;
   const user = lookUpUser(userId, users);
   const templateVars = {
     user: user
@@ -82,9 +80,9 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
-
+//Show short URL//
 app.get("/urls/:shortURL", (req,res) => {
-  const userId = req.session.userId;                             //req.cookies.user_id;
+  const userId = req.session.userId;
   const user = lookUpUser(userId, users);
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -108,10 +106,15 @@ app.get("/hello", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: false //youre never a user here
+    user: false
   };
   res.render('login',templateVars);
 });
+
+/////////////////
+/////////////////
+////APP POSTS////
+/////////////////
 
 app.post("/login", (req, res) => {
   const user = findEmail(req.body.email, users);
@@ -129,59 +132,54 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout" , (req, res) => {
-  // res.clearCookie("user_id");
-  req.session = null; //burns cookie
+  req.session = null;
   res.redirect("/login");
 });
+/*Register: This will provide user with unique ID and hashed password.
+ findEmail function will compare user entry to database if email is present user will be unable to register
+ user is then provided an encrypted cookie */
 
-app.post("/register" , (req, res) => { //registering a new user and storing the info into the users database
+app.post("/register" , (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const id = generateRandomString();
   const email = req.body.email;
-  console.log(id);
-    if (email === '' || password === '') {
+  if (email === '' || password === '') {
     res.status(404).send("You need to log in");
   } else if (findEmail(email, users)) {
-    res.status(404).send("Email taken please enter a different email"); 
+    res.status(404).send("Email taken please enter a different email");
   }
   users[id] = {
     id,
     email,
     password: hashedPassword
   };
-  console.log("checking the users object", users);
-  // res.cookie('user_id', id);
-  req.session.userId = id; // setting cookie to user ID value
+  req.session.userId = id; //setting cookie to user ID value
   res.redirect("/urls");
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // uses the shortURL key to enter database
+  //delete below may look shaded please leave in//
   delete urlDatabase[req.params.shortURL];
-  const userId = req.session.userId;                //req.cookies.user_id;
+  const userId = req.session.userId;
   const user = lookUpUser(userId, users);
   const templateVars = {
     urls: urlDatabase,
     user: user
   };
-  res.render("urls_index", templateVars); // refreshes the page with the deleted url gone.
+  res.render("urls_index", templateVars);
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
-  res.redirect("/urls"); // refreshes the page with the deleted url gone.
+  res.redirect("/urls");
 });
 
-
-
 app.post("/urls", (req, res) => {
+  //Short url created. urlDatabase then updated with user specific Urls//
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
-  let userID =  req.session.userId;                          //req.cookies["user_id"];
-  // let urlId = generateRandomString()
+  let userID =  req.session.userId;
   urlDatabase[shortURL] = {longURL:longURL, userID: userID };
-  console.log('want to see if users updated:' , users);
-  console.log('want to see if URL database updated  updated:' , urlDatabase);
   res.redirect("/urls");
 });
 
