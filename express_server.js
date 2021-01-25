@@ -49,7 +49,7 @@ app.get('/register', (req, res) => {
   };
   res.render("register", templateVars);
 });
-    
+//view your URLS///
 app.get('/urls', (req,res) => {
   const userId =  req.session.userId;
   const templateVars = {
@@ -75,21 +75,31 @@ app.get("/urls/new", (req, res) => {
     return res.render("urls_new", templateVars);
   }
 });
-
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+//redirects user to selected url
+app.get("/u/:id", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    res.sendStatus(404);
+  } else {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
+  }
+  
 });
 //Show short URL//
 app.get("/urls/:shortURL", (req,res) => {
   const userId = req.session.userId;
   const user = lookUpUser(userId, users);
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    user: user
-  };
-  res.render('urls_show', templateVars);
+
+  if (!user) {
+    return res.redirect("/login");
+  } else {
+    const templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      user: user
+    };
+    res.render('urls_show', templateVars);
+  }
 });
 
 app.get("/", (req,res) => {
@@ -157,6 +167,7 @@ app.post("/register" , (req, res) => {
   req.session.userId = id; //setting cookie to user ID value
   res.redirect("/urls");
 });
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   //delete below may look shaded please leave in//
   delete urlDatabase[req.params.shortURL];
@@ -169,13 +180,21 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.post("/urls/:shortURL/edit", (req, res) => {
-  urlDatabase[req.params.shortURL].longURL = req.body.longURL;
-  res.redirect("/urls");
+app.post("/urls/:id/edit", (req, res) => {
+  urlDatabase[req.params.id].longURL = req.body.longURL;
+  const userId = req.session.userId;
+  const user = lookUpUser(userId, users);
+  
+  if (!user) {
+    return res.redirect("/login");
+  } else {
+    return res.redirect("/urls/" + req.params.id);
+  }
+  
 });
-
+ //Short url created. urlDatabase then updated with user specific Urls//
 app.post("/urls", (req, res) => {
-  //Short url created. urlDatabase then updated with user specific Urls//
+
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
   let userID =  req.session.userId;
