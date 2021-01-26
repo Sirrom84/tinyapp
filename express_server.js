@@ -89,7 +89,6 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls/:shortURL", (req,res) => {
   const userId = req.session.userId;
   const user = lookUpUser(userId, users);
-
   if (!user) {
     return res.redirect("/login");
   } else {
@@ -98,13 +97,14 @@ app.get("/urls/:shortURL", (req,res) => {
       longURL: urlDatabase[req.params.shortURL].longURL,
       user: user
     };
+    
     res.render('urls_show', templateVars);
   }
 });
 
 app.get("/", (req,res) => {
-  res.send("Hello!");
-});
+  res.redirect('/login')
+});//fix 1 works
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
